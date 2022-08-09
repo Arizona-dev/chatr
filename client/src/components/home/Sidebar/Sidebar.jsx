@@ -1,12 +1,10 @@
-import MenuIcon from '@mui/icons-material/Menu';
-import { AppBar, Box, Drawer, IconButton, Toolbar, Typography, Button, Menu, MenuItem, Avatar, Link } from '@mui/material';
+import { AppBar, Box, Drawer, IconButton, Toolbar } from '@mui/material';
 import React, { useContext, useState } from 'react';
 import SidebarContent from './SidebarContent/SidebarContent';
 import BottomNavigationSidebar from './BottomNavigationSideBar/BottomNavigationSideBar';
-import logo from '../../../../assets/images/messenger.png';
+import MenuIcon from '@mui/icons-material/Menu';
 import { UserContext } from '../../../contexts/user.context';
 import { useNavigate } from 'react-router-dom';
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import { SidebarContext } from '../../../contexts/sidebar.context';
 
 export default function Sidebar({ sidebarWith }) {
@@ -50,17 +48,17 @@ export default function Sidebar({ sidebarWith }) {
                     >
                         <MenuIcon />
                     </IconButton>
-                    <Box sx={{ display: 'flex' }}>
+                    {/* <Box sx={{ display: 'flex' }}>
                         <Box sx={{ display: { xs: 'none', sm: 'flex'} }}>
                             <img src={logo} width='40'  />
                         
                             <Typography alignSelf='center' ml={2} variant="h6" noWrap component="div">
-                                Messenger
+                                CroustiChat
                             </Typography>
                         </Box>
-                    </Box>
+                    </Box> */}
                     
-                    <Box sx={{ display: 'flex' }}>
+                    {/* <Box sx={{ display: 'flex' }}>
                         {user.role === 'ROLE_ADMIN' && 
                             <Button 
                                 onClick={() => navigate('/admin')}
@@ -97,7 +95,7 @@ export default function Sidebar({ sidebarWith }) {
                             <MenuItem onClick={handleLogout}>Logout</MenuItem>
 
                         </Menu>
-                    </Box>
+                    </Box> */}
                 </Toolbar>
                 {/* End Top NavBar */}
 
@@ -117,7 +115,6 @@ export default function Sidebar({ sidebarWith }) {
                 >
                     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                         <SidebarContent navigationIndex={navigationIndex} />
-                        <BottomNavigationSidebar navigationIndex={navigationIndex} setNavigationIndex={setNavigationIndex} />
                     </Box>
                 </Drawer>
 
@@ -136,7 +133,6 @@ export default function Sidebar({ sidebarWith }) {
                 >
                     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                         <SidebarContent navigationIndex={navigationIndex} />
-                        <BottomNavigationSidebar navigationIndex={navigationIndex} setNavigationIndex={setNavigationIndex} />
                     </Box>
                 </Drawer>
                 {/* end for mobile  (responsive) */}

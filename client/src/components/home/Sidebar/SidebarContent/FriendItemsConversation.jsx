@@ -1,4 +1,4 @@
-import { Avatar, List, ListItem, ListItemAvatar, ListItemText, Typography, Button, Box, TextField, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Alert } from '@mui/material';
+import { Avatar, List, ListItem, ListItemAvatar, ListItemText, Typography, Button, Box, TextField, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Alert, Divider } from '@mui/material';
 import React, { useEffect, useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { friendService } from '../../../../services/friend.service';
@@ -7,9 +7,10 @@ import { useForm, Controller } from 'react-hook-form';
 import { SidebarContext } from '../../../../contexts/sidebar.context';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
+import ProfilePopover from '../../components/ProfilePopover';
 
 export default function FriendItemsConversation() {
-    const { user } = useContext(UserContext);
+    const { user, socket } = useContext(UserContext);
     const [isLoading, setIsLoading] = useState(true);
     const [friends, setFriends] = useState([]);
     const [open, setOpen] = useState(false);
@@ -23,24 +24,31 @@ export default function FriendItemsConversation() {
             const request = await friendService.addFriend(data.username);
             reset();
             switch (request.status) {
-            case 'UNKNOWN_USER':
-                setError({ message: "Incorrect username or email !", severity: 'error' });
-                break;
-            case 'EXISTS':
-                setError({ message: "You are already friends with this user !", severity: 'warning' });
-                break;
-            case 'ADDED':
-                setError({ message: "Friend request sent successfully !", severity: 'success' });
-                loadFriendList();
-                break;
-            case 'PENDING':
-                setError({ message: "You already sent a request !", severity: 'success' });
-                break;
-            case 'ERROR_SAME_USER':
-                setError({ message: "You can't add yourself !", severity: 'error' });
-                break;
-            default:
-                setError({ message: "An error occured !", severity: 'error' });
+                case 'UNKNOWN_USER':
+                    setError({ message: "Incorrect username or email !", severity: 'error' });
+                    break;
+                case 'EXISTS':
+                    setError({ message: "You are already friends with this user !", severity: 'warning' });
+                    break;
+                case 'ADDED':
+                    setError({ message: "Friend request sent successfully !", severity: 'success' });
+                    loadFriendList();
+                    socket.emit('friendRequest', { senderId: request.senderId, receiverId: request.receiverId });
+                    break;
+                case 'PENDING':
+                    setError({ message: "You already sent a request !", severity: 'success' });
+                    break;
+                case 'ERROR_SAME_USER':
+                    setError({ message: "You can't add yourself !", severity: 'error' });
+                    break;
+                case 'ERROR_INVALID_USERNAME_OR_EMAIL':
+                    setError({ message: "Invalid username or email format !", severity: 'error' });
+                    break;
+                case 'ERROR_INVALID_USERNAME':
+                    setError({ message: "Invalid username format !", severity: 'error' });
+                    break;
+                default:
+                    setError({ message: "Something went wrong !", severity: 'error' });
             }
         }
     };
@@ -66,26 +74,29 @@ export default function FriendItemsConversation() {
     }
 
     useEffect(() => {
-        loadFriendList();
-    }, []);
+        socket.on('friendRequest', () => {
+            loadFriendList();
+        }),
+            loadFriendList();
+    }, [socket]);
 
     return (
         <>
+            <Box textAlign='center'>
+                <Button variant='contained' sx={{ width: '90%', marginY: '15px' }} onClick={openAddFriendModal}>
+                    Add friends
+                </Button>
+                <Divider sx={{ margin: '6px' }} />
+                <Typography
+                    sx={{ display: 'inline', fontWeight: 'bold' }}
+                    component="span"
+                    variant="subtitle2"
+                    color="text.primary"
+                >
+                    PRIVATE MESSAGES
+                </Typography>
+            </Box>
             <List>
-                <Box textAlign='center'>
-                    <Typography
-                        sx={{ display: 'inline' }}
-                        component="span"
-                        variant="h6"
-                        color="text.primary"
-                    >
-                        Friends
-                    </Typography>
-                    <Button variant='contained' sx={{ width: '90%', marginY: '15px' }} onClick={openAddFriendModal}>
-                        Add a friend
-                    </Button>
-                    <hr></hr>
-                </Box>
                 {friends.map((friend, index) => (
                     <FriendItem key={index} friend={friend} loadFriendList={loadFriendList} />
                 ))}
@@ -94,7 +105,7 @@ export default function FriendItemsConversation() {
                 <DialogTitle>Add a friend</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        You can add a friend using their username or email. Watch out for CaPiTaLs!
+                        You can add a friend using their chatr tag or email. Watch out for CaPiTaLs!
                     </DialogContentText>
                     <form onSubmit={handleSubmit(onSubmit)}>
                         <Controller
@@ -110,7 +121,7 @@ export default function FriendItemsConversation() {
                                         autoFocus
                                         margin="dense"
                                         id="username"
-                                        label="Username or Email Address"
+                                        label="Enter a username#0000 or email"
                                         type="text"
                                         fullWidth
                                         variant="standard"
@@ -123,7 +134,7 @@ export default function FriendItemsConversation() {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={closeAddFriendModal}>Cancel</Button>
-                    <Button onClick={handleSubmit(onSubmit)}>Send friend request</Button>
+                    <Button onClick={handleSubmit(onSubmit)}>Add friend</Button>
                 </DialogActions>
             </Dialog>
         </>
@@ -131,7 +142,7 @@ export default function FriendItemsConversation() {
 }
 
 const FriendItem = (props) => {
-    const { user } = useContext(UserContext);
+    const { user, socket } = useContext(UserContext);
     const { setSidebarOpen } = useContext(SidebarContext)
     const navigate = useNavigate()
     const friend = props.friend.sender.id === user.id ? props.friend.receiver : props.friend.sender;
@@ -148,12 +159,13 @@ const FriendItem = (props) => {
     return (
         // If friendship is active
         (pendingRequest === 0 ?
-            <ListItem button onClick={() => {
+            <ListItem button sx={{ p: '8px' }} onClick={() => {
                 setSidebarOpen(false)
                 navigate(`friends/${friend.id}`)
             }} alignItems="flex-start">
                 <ListItemAvatar>
-                    <Avatar alt={friend.username} src={friend.avatar || 'https://avatars.dicebear.com/api/male/2.svg'} />
+                    <ProfilePopover user={friend} />
+                    {/* <Avatar alt={friend.username} src={friend.avatar || 'https://avatars.dicebear.com/api/male/2.svg'} /> */}
                 </ListItemAvatar>
                 <ListItemText
                     primary={friend.username || 'DeletedUser'}
@@ -174,7 +186,7 @@ const FriendItem = (props) => {
             :
             // If friendship is pending for user interaction
             (pendingRequest === 1 ?
-                <ListItem button alignItems="flex-start" width="100%">
+                <ListItem button sx={{ p: '8px' }} alignItems="flex-start" width="100%">
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }} >
                         <Box sx={{ display: 'flex' }}>
                             <ListItemAvatar>
@@ -185,14 +197,16 @@ const FriendItem = (props) => {
                             />
                         </Box>
                         <Box sx={{ display: 'flex', justifyContent: 'space', alignItems: 'center' }}>
-                            <Button variant='contained' color='primary' sx={{ marginRight: '15px' }} onClick={() => {
+                            <Button variant='contained' size='small' color='primary' sx={{ marginRight: '10px', minWidth: '10px' }} onClick={() => {
                                 friendService.acceptFriend(props.friend.id).finally(() => {
                                     props.loadFriendList();
+                                    socket.emit('friendRequest', {senderId: props.friend.senderId, receiverId: props.friend.receiverId});
                                 })
                             }}><PersonAddAlt1Icon /></Button>
-                            <Button variant='contained' color='secondary' onClick={() => {
+                            <Button variant='contained' size='small' color='secondary' sx={{ minWidth: '10px' }} onClick={() => {
                                 friendService.deleteFriend(props.friend.id).finally(() => {
                                     props.loadFriendList();
+                                    socket.emit('friendRequest', {senderId: props.friend.senderId, receiverId: props.friend.receiverId});
                                 })
                             }}><DeleteIcon /></Button>
                         </Box>
@@ -215,20 +229,21 @@ const FriendItem = (props) => {
                                         variant="body2"
                                         color="text.secondary"
                                     >
-                                        <i>Friend request has been sent, waiting for answer</i>
+                                        <i>Waiting for answer</i>
                                     </Typography>
                                 </React.Fragment>
                             }
                         />
                         <Box sx={{ display: 'flex', justifyContent: 'space', alignItems: 'center' }}>
-                            <Button variant='contained' color='secondary' onClick={() => {
+                            <Button variant='contained' color='secondary' size='small' sx={{ minWidth: '10px' }} onClick={() => {
                                 friendService.deleteFriend(props.friend.id).finally(() => {
                                     props.loadFriendList();
+                                    socket.emit('friendRequest', {senderId: props.friend.senderId, receiverId: props.friend.receiverId});
                                 })
                             }}><DeleteIcon /></Button>
                         </Box>
                     </Box>
-                </ListItem >
+                </ListItem>
             )
         )
     )

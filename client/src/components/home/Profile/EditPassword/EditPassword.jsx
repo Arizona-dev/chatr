@@ -45,8 +45,8 @@ export default function EditPassword ({ open, handleClose, handleOpen, setProfil
                 handleClose()
             }).catch(err => {
                 let error = "Error occured, try again"
-                if(err.match(/Invalid old password/i)) {
-                    error = "Invalid old password"
+                if(err.match(/Incorrect credentials/i)) {
+                    error = "Incorrect credentials"
                 }
                 setStatus(error)
             })
@@ -169,7 +169,7 @@ export default function EditPassword ({ open, handleClose, handleOpen, setProfil
 
                 <Button sx={{
                     marginTop: '1rem'
-                }} fullWidth variant="contained" type='submit'>Edit password</Button>
+                }} fullWidth variant="contained" type='submit'>Change password</Button>
 
 
             </Box>

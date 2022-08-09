@@ -3,7 +3,6 @@ import authRoutes from './auth.routes';
 import userRoutes from './user.routes';
 import messageRoutes from './message.routes';
 import friendRoutes from './friend.routes';
-import interestRoutes from './interest.routes';
 import logRoutes from './log.routes';
 import analyticRoutes from './analytic.routes';
 
@@ -25,10 +24,6 @@ const routes = [
     {
         path: 'friends',
         routes: friendRoutes,
-    },
-    {
-        path: 'interests',
-        routes: interestRoutes,
     },
     {
         path: 'logs',
