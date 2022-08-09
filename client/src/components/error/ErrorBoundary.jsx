@@ -71,7 +71,7 @@ export default class ErrorBoundary extends React.Component {
                         onClose={this.handleClose}
                     >
                         <Alert onClose={this.handleClose} severity="error" sx={{ width: '100%' }}>
-                            Something went wrong, our team is working on it (~2 weeks because oliwier is the most useless dev in the world). Please try later.
+                            Something went wrong, our team is working on it (~24 hours). Please try later.
                         </Alert>
                     </Snackbar>
                     <></>

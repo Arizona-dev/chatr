@@ -4,7 +4,6 @@ import FilterAppLogs from './FilterAppLogs';
 import FilterDatesLogs from './FilterDatesLogs';
 import FilterSeverityLogs from './FilterSeverityLogs';
 import FilterTextSearchLogs from './FilterTextSearchLogs';
-import CounterError from '../../../../error/CounterError';
 
 export default function FilterLogs () {
     return (
@@ -20,7 +19,6 @@ export default function FilterLogs () {
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', margin: '1rem 0' }}>
                 <FilterTextSearchLogs />
-                <CounterError />
             </Box>
         </>
     );

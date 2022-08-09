@@ -34,14 +34,44 @@ export const sendFriendInvitation = ({ senderId, receiverId }) => {
     if (receiverId === '' || receiverId === undefined) {
         return 'null'
     }
+
+    const regex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+    const isEmail = regex.test(receiverId);
+    const isUsername = !isEmail;
+
+    let receiverUsername = '';
+    let receiverDiscriminator = null;
+    let receiverEmail = '';
+
+    // regex to match username format 'username#XXXX'
+    const regexUsername = /^[a-zA-Z0-9]+(#[0-9]{4})?$/;
+
+    if (isEmail) {
+        receiverEmail = receiverId;
+    } else if (isUsername && receiverId.includes('#')) {
+        if (regexUsername.test(receiverId)) {   
+            receiverUsername = receiverId.split('#')[0];
+            receiverDiscriminator = receiverId.split('#')[1];
+        } else {
+            return {
+                status: 'ERROR_INVALID_USERNAME',
+            };
+        }
+    } else {
+        return {
+            status: 'ERROR_INVALID_USERNAME_OR_EMAIL',
+        };
+    }
+
     return User.findOne({
         where: {
             [Op.or]: [
                 {
-                    username: receiverId,
+                    username: receiverUsername,
+                    discriminator: receiverDiscriminator,
                 },
                 {
-                    email: receiverId,
+                    email: receiverEmail,
                 },
             ],
         },
@@ -86,6 +116,7 @@ export const sendFriendInvitation = ({ senderId, receiverId }) => {
                     .then(() => {
                         return {
                             status: friendsStatus.ADDED,
+                            receiverId: receiver.id,
                         };;
                     });
             })
@@ -143,6 +174,7 @@ export const getFriendChat = (friendOneId, friendTwoId) => Message.findAll({
                 receiverId: friendOneId,
             },
         ],
+        deleted: false
     },
     include: [
         {

@@ -1,16 +1,10 @@
-import React, { Component } from 'react';
-import { Box } from '@mui/system';
-import { Autocomplete, Button, FormControl, FormHelperText, InputAdornment, InputLabel, OutlinedInput, TextField, Typography, IconButton, Alert } from '@mui/material';
+import React, { useContext, useEffect, useCallback, useState } from 'react';
 import * as yup from 'yup';
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useContext } from 'react';
-import { interestService } from '../../../services/interest.service';
-import { useEffect } from 'react';
-import { UserContext } from '../../../contexts/user.context';
 import { useFormik } from 'formik';
+import { Box } from '@mui/system';
 import EditIcon from '@mui/icons-material/Edit';
-import { useCallback } from 'react';
+import { Button, FormControl, FormHelperText, InputAdornment, InputLabel, OutlinedInput, TextField, Typography, IconButton, Alert } from '@mui/material';
+import { UserContext } from '../../../contexts/user.context';
 import { userService } from '../../../services/user.service';
 import EditPassword from './EditPassword/EditPassword';
 
@@ -19,17 +13,12 @@ const validationSchema = yup.object({
         .string('Enter your username')
         .required('Username is required')
         .min(3)
-        .max(20),
-    interests: yup.array().min(1, "at least 1 language is required").required("Interests are required"),
+        .max(32)
 });
 
 export default function Profile() {
 
     const { user, setUser } = useContext(UserContext);
-
-    const navigate = useNavigate();
-
-    const [programmingLanguages, setProgrammingLanguages] = useState([]);
 
     const [profileUpdated, setProfileUpdated] = useState(false);
 
@@ -37,22 +26,11 @@ export default function Profile() {
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
 
-    useEffect(() => {
-        interestService.getAllInterests().then(res => {
-            setProgrammingLanguages(res);
-        });
-    }, [])
-
-    const handleInterests = useCallback((event, value) => {
-        formik.setFieldValue('interests', value);
-    })
-
     const formik = useFormik({
         initialValues: {
             email: user.email,
             username: user.username,
-            password: 'fakepasswordlol',
-            interests: user.interests?.map(({ UserInterest, ...rest }) => rest) || [],
+            password: 'hey what are you looking at?',
         },
         validationSchema,
         onSubmit: ({ username, interests }, { setStatus }) => {
@@ -81,9 +59,9 @@ export default function Profile() {
                 component="form"
                 onSubmit={formik.handleSubmit}
                 sx={{
-                    boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.1)',
+                    boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.2)',
                     borderRadius: '10px',
-                    padding: '20px',
+                    padding: '40px',
                     width: 'fit-content'
                 }}
             >
@@ -95,7 +73,7 @@ export default function Profile() {
                 <Box sx={{ textAlign: 'center' }}>
                     <img src={user.avatar} width='40' />
                 </Box>
-                <Alert severity="success" sx={{ width: '100%', display: profileUpdated ? 'flex': 'none' }}>
+                <Alert severity="success" sx={{ width: '100%', display: profileUpdated ? 'flex': 'none', my: '15px' }}>
                     Profile updated successfully!
                 </Alert>
                 <TextField
@@ -110,7 +88,8 @@ export default function Profile() {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     error={formik.touched.email && Boolean(formik.errors.email)}
-                    helperText={formik.touched.email && formik.errors.email} />
+                    helperText={formik.touched.email && formik.errors.email}
+                    sx={{ my: '15px' }} />
                 <TextField
                     margin='dense'
                     fullWidth
@@ -121,12 +100,14 @@ export default function Profile() {
                     value={formik.values.username}
                     onChange={formik.handleChange}
                     error={formik.touched.username && Boolean(formik.errors.username)}
-                    helperText={formik.touched.username && formik.errors.username} />
+                    helperText={formik.touched.username && formik.errors.username}
+                    sx={{ my: '15px' }} />
                 <FormControl
                     fullWidth
                     margin='dense'
                     variant="outlined"
                     error={formik.touched.password && Boolean(formik.errors.password)}
+                    sx={{ my: '15px' }}
                 >
                     <InputLabel htmlFor="password">Password</InputLabel>
                     <OutlinedInput
@@ -152,29 +133,6 @@ export default function Profile() {
                     />
                     <FormHelperText error >
                         {formik.touched.password && formik.errors.password}
-                    </FormHelperText>
-                </FormControl>
-
-                <FormControl fullWidth margin='dense'>
-                    <Autocomplete
-                        isOptionEqualToValue={(option, value) => option.id === value.id}
-                        variant="outlined"
-                        multiple
-                        id="interests"
-                        options={programmingLanguages}
-                        getOptionLabel={(option) => option.title}
-                        value={formik.values.interests}
-                        onChange={handleInterests}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Favorite programming languages"
-                                placeholder="Favorite programming languages"
-                            />
-                        )}
-                    />
-                    <FormHelperText error >
-                        {formik.touched.interests && formik.errors.interests}
                     </FormHelperText>
                 </FormControl>
 

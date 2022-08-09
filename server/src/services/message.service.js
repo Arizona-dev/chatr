@@ -34,6 +34,7 @@ export const getMessagesFromUsers = (senderId, receiverId) => Message.findAll({
                 receiverId: senderId,
             },
         ],
+        deleted: false
     },
     include: [
         {

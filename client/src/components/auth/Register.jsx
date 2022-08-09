@@ -7,7 +7,6 @@ import { useNavigate } from 'react-router-dom';
 import * as yup from 'yup';
 import { UserContext } from '../../contexts/user.context';
 import { authService } from '../../services/auth.service';
-import { interestService } from '../../services/interest.service';
 import logo from '../../../assets/images/messenger.png';
 
 const validationSchema = yup.object({
@@ -19,11 +18,10 @@ const validationSchema = yup.object({
         .string('Enter your username')
         .required('Username is required')
         .min(3)
-        .max(20),
+        .max(32),
     password: yup.string()
         .min(8, 'Password should be at least 8 characters')
         .required('No password provided.'),
-    interests: yup.array().min(1, "at least 1 language is required").required("Interests are required"),
 });
 
 export default function Register() {
@@ -38,25 +36,16 @@ export default function Register() {
         setShowPassword(!showPassword);
     };
 
-    const [programmingLanguages, setProgrammingLanguages] = useState([]);
-
-    useEffect(() => {
-        interestService.getAllInterests().then(res => {
-            setProgrammingLanguages(res);
-        });
-    }, [])
-
     const formik = useFormik({
         initialValues: {
             email: '',
             username: '',
             password: '',
-            interests: [],
         },
         validationSchema,
-        onSubmit: ({ email, username, password, interests }, { setStatus }) => {
+        onSubmit: ({ email, username, password }, { setStatus }) => {
             authService
-                .register({ email, username, password, interests })
+                .register({ email, username, password })
                 .then((res) => {
                     setUser(res.user);
                     navigate('/');
@@ -73,10 +62,6 @@ export default function Register() {
                 });
         }
     });
-
-    const handleInterests = useCallback((event, value) => {
-        formik.setFieldValue('interests', value);
-    }) 
 
     return (
         <Box sx={
@@ -160,28 +145,6 @@ export default function Register() {
                         />
                         <FormHelperText error >
                             {formik.touched.password && formik.errors.password}
-                        </FormHelperText>
-                    </FormControl>
-
-                    <FormControl fullWidth margin='dense'>
-                        <Autocomplete
-                            variant="outlined"
-                            multiple
-                            id="interests"
-                            options={programmingLanguages}
-                            getOptionLabel={(option) => option.title}
-                            value={formik.values.interests}
-                            onChange={handleInterests}
-                            renderInput={(params) => (
-                                <TextField
-                                    {...params}
-                                    label="Favorite programming languages"
-                                    placeholder="Favorite programming languages"
-                                />
-                            )}
-                        />
-                        <FormHelperText error >
-                            {formik.touched.interests && formik.errors.interests}
                         </FormHelperText>
                     </FormControl>
 

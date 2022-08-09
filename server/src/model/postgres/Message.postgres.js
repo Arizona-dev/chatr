@@ -11,7 +11,7 @@ Message.init(
             primaryKey: true,
         },
         text: {
-            type: DataTypes.STRING,
+            type: DataTypes.STRING(5000),
             allowNull: false,
         },
         edited: {

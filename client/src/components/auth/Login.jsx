@@ -82,8 +82,8 @@ export default function Login() {
                     if (err.match(/credentials/i)) {
                         customError = "Invalid credentials";
                     }
-                    if(err.match(/User is not validated/i)){
-                        customError = "Confirm your account";
+                    if(err.match(/User account is not active/i)){
+                        customError = "Please confirm your email";
                     }
                     setStatus(customError);
                 });
@@ -109,8 +109,8 @@ export default function Login() {
                     if (err.match(/identifiant/i)) {
                         customError = "Invalid credentials";
                     }
-                    if (err.match(/Invalid email/i)) {
-                        customError = "Email does not exist";
+                    if (err.match(/Email already sent/i)) {
+                        customError = "An email has already been sent";
                     }
                     setStatus(customError);
                 });
@@ -236,7 +236,7 @@ export default function Login() {
                             onSubmit={formikResetPassword.handleSubmit}
                             sx={style}>
                             <Typography id="modal-modal-title" variant="h6" component="h2">
-                                Give us your email and we will send you a link to reset your password
+                                Enter your email, you will receive a link to change your password
                             </Typography>
                             <Alert severity="success" sx={{ width: '100%', display: emailSent ? 'flex': 'none' }}>
                                 Email sent!

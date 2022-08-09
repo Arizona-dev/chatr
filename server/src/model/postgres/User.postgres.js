@@ -12,6 +12,9 @@ User.init(
             defaultValue: DataTypes.UUIDV4,
             primaryKey: true,
         },
+        discriminator: {
+            type: DataTypes.INTEGER,
+        },
         email: {
             type: DataTypes.STRING,
             allowNull: false,
@@ -40,7 +43,6 @@ User.init(
         username: {
             type: DataTypes.STRING,
             allowNull: false,
-            unique: true,
             defaultValue: '',
         },
         avatar: {
@@ -68,6 +70,8 @@ User.addHook('beforeCreate', async (user) => {
             await bcryptjs.genSalt(),
         );
     }
+
+    user.discriminator = await generateDiscriminator(user.username);
 });
 
 User.addHook('beforeUpdate', async (user, { fields }) => {
@@ -79,5 +83,22 @@ User.addHook('beforeUpdate', async (user, { fields }) => {
         );
     }
 });
+
+const generateDiscriminator = async (username) => {
+    const x1 = Math.floor(Math.random() * 10), x2 = Math.floor(Math.random() * 10), x3 = Math.floor(Math.random() * 10), x4 = Math.floor(Math.random() * 10);
+    const discriminator = `${x1}${x2}${x3}${x4}`;
+    const userWithSameUsernameAndDiscriminator = await User.findOne({
+        where: {
+            username: username,
+            discriminator: discriminator,
+        },
+    });
+
+    if (userWithSameUsernameAndDiscriminator) {
+        await generateDiscriminator(username);
+    }
+
+    return discriminator;
+}
 
 export { User };

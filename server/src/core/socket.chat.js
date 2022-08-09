@@ -14,12 +14,11 @@ class Connection {
 
         socket.on('getMessages', () => this.getMessages());
         socket.on('message', (value) => this.handleMessage(value));
+        socket.on('friendRequest', (value) => this.handleFriendRequest(value));
         socket.on('update', (message) => this.editMessage(message));
         socket.on('delete', (message) => this.deleteMessage(message));
         socket.on('disconnect', () => this.disconnect());
-        socket.on('isTyping', (data) => {
-            this.sendIsTyping(data);
-        });
+        socket.on('isTyping', (data) => this.sendIsTyping(data));
         socket.on('connect_error', (err) => {
             console.log(`connect_error due to ${err.message}`);
         });
@@ -39,6 +38,10 @@ class Connection {
 
     getMessages() {
         messages.forEach((message) => this.sendMessage(message));
+    }
+
+    handleFriendRequest(value) {
+        this.io.sockets.to([value.senderId, value.receiverId]).emit('friendRequest');
     }
 
     handleMessage(value) {

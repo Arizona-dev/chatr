@@ -1,4 +1,4 @@
-import { Box } from '@mui/material';
+import { Box, Grid, List } from '@mui/material';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import useDebounce from '../../../hooks/useDebounce';
@@ -14,7 +14,7 @@ function Messages({ socket, oldMessages, friend }) {
 
     const [isTyping, setIsTyping] = useState(false)
 
-    const isTypingDebounced = useDebounce(isTyping, 4000)
+    const isTypingDebounced = useDebounce(isTyping, 400000)
 
     useEffect(() => {
         setMessages(oldMessages);
@@ -25,7 +25,7 @@ function Messages({ socket, oldMessages, friend }) {
             if (message.senderId === params.friendId || message.senderId === user.id) {
                 setIsTyping(false)
                 setMessages((prevMessages) => {
-                    const newMessages = [ ...prevMessages ];
+                    const newMessages = [...prevMessages];
                     newMessages.push(message);
                     return newMessages;
                 });
@@ -34,8 +34,8 @@ function Messages({ socket, oldMessages, friend }) {
 
         const isTypingListener = (message) => {
             if (message.sender.id !== user.id) {
-                if ( message.text !== '') {
-                    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+                if (message.text !== '') {
+                    // bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
                     setIsTyping(message.id)
                 } else {
                     setIsTyping(false)
@@ -46,8 +46,6 @@ function Messages({ socket, oldMessages, friend }) {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
 
         const onMessageUpdate = (message) => {
-            console.log('message update', message)
-
             setMessages((prevMessages) => {
                 const newMessages = [...prevMessages];
                 const index = prevMessages.findIndex((m) => m.id === message.id);
@@ -61,7 +59,6 @@ function Messages({ socket, oldMessages, friend }) {
         socket.on('delete', onMessageUpdate);
         socket.on('update', onMessageUpdate);
         socket.on('isTyping', isTypingListener);
-        socket.emit('getMessages');
 
         return () => {
             socket.off('message', messageListener);
@@ -78,38 +75,52 @@ function Messages({ socket, oldMessages, friend }) {
         }
     }, [isTypingDebounced])
 
+    const renderMessages = [...Object.values(messages)].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+    const getLastSender = (index, message) => {
+        if (index === 0) {
+            return false;
+        }
+        const msg = renderMessages[index-1];
+        if (msg.sender.id === message.sender.id) {
+            return true;
+        }
+        return false;
+    }
+
     return (
-        <Box sx={{ flex: '1 0 0', overflowY: 'auto' }}>
-            {[...Object.values(messages)]
-                .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
-                .map((message) => (
-                    <Message key={message.id} message={message} socket={socket}/>
-                ))
-            }
+        <Grid container sx={{ flex: '1', overflowY: 'auto', flexDirection: 'column' }}>
+            <List sx={{ flex: '1' }}>
+                {
+                    renderMessages.map((message, index) => (
+                        <Message key={message.id} sameSenderOfLastMessage={getLastSender(index, message)} message={message} socket={socket} />
+                    ))
+                }
+
+            </List>
             <div ref={bottomRef} />
             <Box sx={{
                 marginLeft: '1rem',
                 display: 'flex',
                 color: 'gray',
                 visibility: isTyping ? 'visible' : 'hidden',
-                alignItems: 'center',
             }}>
                 <Box
                     component="img"
                     src={friend.avatar}
-                    sx={{width: 20, marginRight: 1}}>
+                    sx={{ width: 20, marginRight: 1 }}>
 
                 </Box>
                 <span>{friend.username} is typing</span>
-                <Box  id="wave">
+                <Box id="wave">
                     <span className="dot one"></span>
                     <span className="dot two"></span>
                     <span className="dot three"></span>
                 </Box>
             </Box>
-            
-            
-        </Box>
+
+
+        </Grid>
     );
 }
 

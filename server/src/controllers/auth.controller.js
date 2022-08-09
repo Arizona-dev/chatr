@@ -10,7 +10,6 @@ import { ApiError } from '../utils/ApiError';
 export const register = async (req, res, next) => {
     try {
         const user = await userService.createUser(req.body);
-        // generate token with Math random
         const emailToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
         await Token.create({
@@ -19,7 +18,7 @@ export const register = async (req, res, next) => {
             type: tokenTypes.CONFIRM_EMAIL,
         });
 
-        await sendRegistrationMail(req.body.email, emailToken);
+        await sendRegistrationMail(req.body.email, req.body.username, emailToken);
         res.json({ id: user.id });
     } catch (err) {
         next(err);
@@ -80,11 +79,35 @@ export const resetPassword = async (req, res, next) => {
             where: {
                 email,
             },
+            include: [
+                {
+                    model: Token,
+                    as: 'tokens',
+                    where: {
+                        type: tokenTypes.RESET_PASSWORD,
+                    },
+                },
+            ],
         });
 
         if (!user) {
-            throw new ApiError(StatusCodes.NOT_FOUND, 'Invalid email');
+            throw new ApiError(StatusCodes.NOT_FOUND, 'An email has already been sent');
         }
+
+        const oldToken = await Token.findOne({
+            where: {
+                userId: user.id,
+                type: tokenTypes.RESET_PASSWORD,
+            },
+        });
+
+        if (oldToken) {
+            if (oldToken.dataValues.createdAt > new Date(Date.now() - 5 * 60 * 1000)) {
+                return res.json({ id: user.id })
+            }
+            await oldToken.destroy();
+        }
+
 
         const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
         await Token.create({
@@ -92,7 +115,7 @@ export const resetPassword = async (req, res, next) => {
             token,
             type: tokenTypes.RESET_PASSWORD,
         });
-        await sendResetPassword(email, token);
+        await sendResetPassword(user.email, user.username, token);
         res.json({ id: user.id });
     } catch (err) {
         next(err);

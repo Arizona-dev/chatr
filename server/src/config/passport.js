@@ -1,20 +1,15 @@
 import passport from 'passport';
-import GoogleStrategy from 'passport-google-oauth20';
+// import GoogleStrategy from 'passport-google-oauth20';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import config from './config';
 import * as usersService from '../services/user.service';
 import * as tokensService from '../services/token.service';
-import { Interest, User } from '../model/postgres/index';
+import { User } from '../model/postgres/index';
 
 const jwtVerify = async (payload, done) => {
     try {
         const user = await User.findByPk(payload.id, {
-            include: [
-                {
-                    model: Interest,
-                    as: 'interests',
-                },
-            ],
+            include: [],
         });
         if (!user) {
             return done(null, false);
